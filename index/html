@@ -1,1 +1,656 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Master 500</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Assistant', sans-serif; background-color: #fbfcfe; margin: 0; }
+        .perspective-1000 { perspective: 1000px; }
+        @keyframes pulse-custom { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .animate-pulse-custom { animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // רשימת מילים מורחבת (500 מילים)
+        const FINAL_WORD_LIST = [
+            { word: "Analyze", translation: "לנתח", phonetic: "אֶ-נָ-לַאייז" },
+            { word: "Approach", translation: "גישה / לגשת", phonetic: "אֶ-פְּרוֹ-טְשׁ" },
+            { word: "Appropriate", translation: "מתאים, הולם", phonetic: "אֶ-פְּרוֹ-פְּרִי-אֵייט" },
+            { word: "Available", translation: "זמין", phonetic: "אֶ-ווֵי-לָ-בְּל" },
+            { word: "Benefit", translation: "תועלת", phonetic: "בֶּ-נֶ-פִיט" },
+            { word: "Category", translation: "קטגוריה", phonetic: "קָ-טֶ-גוֹ-רִי" },
+            { word: "Community", translation: "קהילה", phonetic: "קוֹ-מְיוּ-נִי-טִי" },
+            { word: "Complex", translation: "מורכב", phonetic: "קוֹם-פְּלֶקְס" },
+            { word: "Concept", translation: "מושג", phonetic: "קוֹן-סֶפְּט" },
+            { word: "Conclusion", translation: "מסקנה", phonetic: "קוֹן-קְלוּ-זֶ'ן" },
+            { word: "Abstract", translation: "מופשט", phonetic: "אֶבּ-סְטְרֶקְט" },
+            { word: "Acknowledge", translation: "להכיר ב-", phonetic: "אֶק-נוֹ-לֶג'" },
+            { word: "Aggregate", translation: "מקבץ", phonetic: "אֶ-גְרֶ-גֵייט" },
+            { word: "Allocation", translation: "הקצאה", phonetic: "אֶ-לוֹ-קֵי-שֶׁן" },
+            { word: "Assignment", translation: "משימה", phonetic: "אֶ-סַאיין-מֶנְט" },
+            { word: "Challenge", translation: "אתגר", phonetic: "טְשֶׁ-לֶנְג'" },
+            { word: "Cooperate", translation: "לשתף פעולה", phonetic: "קוֹ-אוֹ-פֶּ-רֵייט" },
+            { word: "Decade", translation: "עשור", phonetic: "דֶ-קֵייד" },
+            { word: "Reveal", translation: "לחשוף", phonetic: "רִי-ווִיל" },
+            { word: "Unique", translation: "ייחודי", phonetic: "יוּ-נִיק" },
+            { word: "Abandon", translation: "לנטוש", phonetic: "אֶ-בֶּנ-דוֹן" },
+            { word: "Abroad", translation: "בחו''ל", phonetic: "אֶ-בְּרוֹד" },
+            { word: "Achieve", translation: "להשיג", phonetic: "אֶ-טְשִׁיב" },
+            { word: "Advice", translation: "עצה", phonetic: "אֶד-וַאייס" },
+            { word: "Budget", translation: "תקציב", phonetic: "בַּא-גֶ'ט" },
+            { word: "Campaign", translation: "קמפיין", phonetic: "קֶמ-פֵּיין" },
+            { word: "Decision", translation: "החלטה", phonetic: "דִי-סִי-זֶ'ן" },
+            { word: "Explain", translation: "להסביר", phonetic: "אִק-סְפְּלֵיין" },
+            { word: "Focus", translation: "מיקוד", phonetic: "פוֹ-קוּס" },
+            { word: "Goal", translation: "מטרה", phonetic: "גוֹל" },
+            { word: "Ability", translation: "יכולת", phonetic: "אֶ-בִּילִ-טִי" },
+            { word: "Accept", translation: "לקבל", phonetic: "אֶק-סֶפְּט" },
+            { word: "Account", translation: "חשבון", phonetic: "אֶ-קַאונְט" },
+            { word: "Action", translation: "פעולה", phonetic: "אֶק-שֶׁן" },
+            { word: "Active", translation: "פעיל", phonetic: "אֶק-טִיב" },
+            { word: "Actual", translation: "ממשי", phonetic: "אֶק-טְשׁוּ-אֵל" },
+            { word: "Address", translation: "כתובת", phonetic: "אֶ-דְרֶס" },
+            { word: "Adopt", translation: "לאמץ", phonetic: "אֶ-דוֹפְּט" },
+            { word: "Adult", translation: "מבוגר", phonetic: "אֶ-דַאלְט" },
+            { word: "Advance", translation: "התקדמות", phonetic: "אֶד-ווַאנְס" },
+            { word: "Advice", translation: "עצה", phonetic: "אֶד-וַאייס" },
+            { word: "Affect", translation: "להשפיע", phonetic: "אֶ-פֶקְט" },
+            { word: "Against", translation: "נגד", phonetic: "אֶ-גֶנְסְט" },
+            { word: "Agency", translation: "סוכנות", phonetic: "אֵי-ג'ֶנ-סִי" },
+            { word: "Agent", translation: "סוכן", phonetic: "אֵי-גֶ'נְט" },
+            { word: "Agree", translation: "להסכים", phonetic: "אֶ-גְרִי" },
+            { word: "Allow", translation: "להרשות", phonetic: "אֶ-לַאוּ" },
+            { word: "Almost", translation: "כמעט", phonetic: "אוֹל-מוֹסְט" },
+            { word: "Already", translation: "כבר", phonetic: "אוֹל-רֶ-דִי" },
+            { word: "Amount", translation: "כמות", phonetic: "אֶ-מַאונְט" },
+            { word: "Animal", translation: "חיה", phonetic: "אֶ-נִי-מָל" },
+            { word: "Answer", translation: "תשובה", phonetic: "אֶנ-סֶר" },
+            { word: "Anyone", translation: "מישהו", phonetic: "אֶ-נִי-וַואן" },
+            { word: "Appear", translation: "להופיע", phonetic: "אֶ-פִּיר" },
+            { word: "Area", translation: "אזור", phonetic: "אֵ-רִי-אָה" },
+            { word: "Argue", translation: "להתווכח", phonetic: "אֲר-גְיוּ" },
+            { word: "Arm", translation: "זרוע", phonetic: "אֲרְם" },
+            { word: "Around", translation: "מסביב", phonetic: "אֶ-רַאונְד" },
+            { word: "Art", translation: "אמנות", phonetic: "אֲרְט" },
+            { word: "Article", translation: "מאמר", phonetic: "אֲר-טִי-קֶל" },
+            { word: "Artist", translation: "אמן", phonetic: "אֲר-טִיסְט" },
+            { word: "Assume", translation: "להניח", phonetic: "אֶ-סְיוּם" },
+            { word: "Attack", translation: "התקפה", phonetic: "אֶ-טֶק" },
+            { word: "Avoid", translation: "להימנע", phonetic: "אֶ-ווֹיְד" },
+            { word: "Back", translation: "גב / חזרה", phonetic: "בֶּק" },
+            { word: "Bad", translation: "רע", phonetic: "בֶּד" },
+            { word: "Bag", translation: "תיק", phonetic: "בֶּג" },
+            { word: "Balance", translation: "איזון", phonetic: "בֶּ-לֶנְס" },
+            { word: "Ball", translation: "כדור", phonetic: "בּוֹל" },
+            { word: "Bank", translation: "בנק", phonetic: "בֶּנְק" },
+            { word: "Base", translation: "בסיס", phonetic: "בֵּייס" },
+            { word: "Basic", translation: "בסיסי", phonetic: "בֵּי-סִיק" },
+            { word: "Basket", translation: "סל", phonetic: "בֶּס-קֶט" },
+            { word: "Be", translation: "להיות", phonetic: "בִּי" },
+            { word: "Beat", phonetic: "להביס", phonetic: "בִּיט" },
+            { word: "Beautiful", translation: "יפה", phonetic: "בְּיוּ-טִי-פוּל" },
+            { word: "Because", translation: "בגלל", phonetic: "בִּי-קוֹז" },
+            { word: "Become", translation: "להפוך ל-", phonetic: "בִּי-קַאם" },
+            { word: "Bed", translation: "מיטה", phonetic: "בֶּד" },
+            { word: "Before", translation: "לפני", phonetic: "בִּי-פוֹר" },
+            { word: "Begin", translation: "להתחיל", phonetic: "בִּי-גִין" },
+            { word: "Behind", translation: "מאחורי", phonetic: "בִּי-הַאיינְד" },
+            { word: "Believe", translation: "להאמין", phonetic: "בִּי-לִיב" },
+            { word: "Below", translation: "מתחת", phonetic: "בִּי-לוֹ" },
+            { word: "Best", translation: "הכי טוב", phonetic: "בֶּסְט" },
+            { word: "Better", translation: "טוב יותר", phonetic: "בֶּ-טֶר" },
+            { word: "Between", translation: "בין", phonetic: "בִּי-טְווִין" },
+            { word: "Beyond", translation: "מעבר", phonetic: "בִּי-יוֹנְד" },
+            { word: "Big", translation: "גדול", phonetic: "בִּיג" },
+            { word: "Bill", translation: "שטר / חשבון", phonetic: "בִּיל" },
+            { word: "Bird", translation: "ציפור", phonetic: "בֶּרְד" },
+            { word: "Bit", translation: "קצת", phonetic: "בִּיט" },
+            { word: "Black", translation: "שחור", phonetic: "בְּלֶק" },
+            { word: "Blood", translation: "דם", phonetic: "בְּלַאד" },
+            { word: "Blue", translation: "כחול", phonetic: "בְּלוּ" },
+            { word: "Board", translation: "לוח", phonetic: "בּוֹרְד" },
+            { word: "Boat", translation: "סירה", phonetic: "בּוֹט" },
+            { word: "Body", translation: "גוף", phonetic: "בּוֹ-דִי" },
+            { word: "Bone", translation: "עצם", phonetic: "בּוֹן" },
+            { word: "Book", translation: "ספר", phonetic: "בּוּק" },
+            { word: "Born", translation: "נולד", phonetic: "בּוֹרְן" },
+            { word: "Both", translation: "שניהם", phonetic: "בּוֹת'" },
+            { word: "Box", translation: "קופסה", phonetic: "בּוֹקְס" },
+            { word: "Boy", translation: "ילד", phonetic: "בּוֹי" },
+            { word: "Brain", translation: "מוח", phonetic: "בְּרֵיין" },
+            { word: "Branch", translation: "ענף", phonetic: "בְּרֶנְטְשׁ" },
+            { word: "Bread", translation: "לחם", phonetic: "בְּרֶד" },
+            { word: "Break", translation: "לשבור", phonetic: "בְּרֵייק" },
+            { word: "Bridge", translation: "גשר", phonetic: "בְּרִידְג'" },
+            { word: "Bright", translation: "בהיר", phonetic: "בְּרַאייְט" },
+            { word: "Bring", translation: "להביא", phonetic: "בְּרִינְג" },
+            { word: "Brother", translation: "אח", phonetic: "בְּרַא-דֶ'ר" },
+            { word: "Brown", translation: "חום", phonetic: "בְּרַאוּן" },
+            { word: "Build", translation: "לבנות", phonetic: "בִּילְד" },
+            { word: "Burn", translation: "לשרוף", phonetic: "בֶּרְן" },
+            { word: "Business", translation: "עסק", phonetic: "בִּיזְנֶס" },
+            { word: "Busy", translation: "עסוק", phonetic: "בִּי-זִי" },
+            { word: "Buy", translation: "לקנות", phonetic: "בַּאיי" },
+            { word: "Cake", translation: "עוגה", phonetic: "קֵייק" },
+            { word: "Call", translation: "להתקשר", phonetic: "קוֹל" },
+            { word: "Camera", translation: "מצלמה", phonetic: "קֶ-מֶ-רָה" },
+            { word: "Camp", translation: "מחנה", phonetic: "קֶמְפּ" },
+            { word: "Can", translation: "יכול", phonetic: "קֶן" },
+            { word: "Capital", translation: "עיר בירה", phonetic: "קֶ-פִּי-טָל" },
+            { word: "Car", translation: "מכונית", phonetic: "קַאר" },
+            { word: "Card", translation: "כרטיס", phonetic: "קַארְד" },
+            { word: "Care", translation: "טיפול", phonetic: "קֶר" },
+            { word: "Carry", translation: "לשאת", phonetic: "קֶ-רִי" },
+            { word: "Case", translation: "מקרה", phonetic: "קֵייס" },
+            { word: "Cat", translation: "חתול", phonetic: "קֶט" },
+            { word: "Catch", translation: "לתפוס", phonetic: "קֶטְשׁ" },
+            { word: "Cause", translation: "סיבה", phonetic: "קוֹז" },
+            { word: "Center", translation: "מרכז", phonetic: "סֶנ-טֶר" },
+            { word: "Chance", translation: "סיכוי", phonetic: "טְשֶׁנְס" },
+            { word: "Change", translation: "שינוי", phonetic: "צֵ'יינְג'" },
+            { word: "Check", translation: "בדיקה", phonetic: "טְשֶׁק" },
+            { word: "Child", translation: "ילד", phonetic: "טְשַׁאיי-לְד" },
+            { word: "Choice", translation: "בחירה", phonetic: "טְשׁוֹיְס" },
+            { word: "City", translation: "עיר", phonetic: "סִי-טִי" },
+            { word: "Class", translation: "כיתה", phonetic: "קְלַאס" },
+            { word: "Clean", translation: "נקי", phonetic: "קְלִין" },
+            { word: "Clear", translation: "ברור", phonetic: "קְלִיר" },
+            { word: "Close", translation: "לסגור", phonetic: "קְלוֹז" },
+            { word: "Cold", translation: "קר", phonetic: "קוֹלְד" },
+            { word: "Color", translation: "צבע", phonetic: "קַא-לֶר" },
+            { word: "Come", translation: "לבוא", phonetic: "קַאם" },
+            { word: "Common", translation: "נפוץ", phonetic: "קוֹ-מוֹן" },
+            { word: "Company", translation: "חברה", phonetic: "קַאמ-פַּנִי" },
+            { word: "Compare", translation: "להשוות", phonetic: "קוֹם-פֶּר" },
+            { word: "Complete", translation: "להשלים", phonetic: "קוֹם-פְּלִית" },
+            { word: "Condition", translation: "מצב", phonetic: "קוֹן-דִי-שֶׁן" },
+            { word: "Continue", translation: "להמשיך", phonetic: "קוֹן-טִינ-יוּ" },
+            { word: "Control", translation: "שליטה", phonetic: "קוֹן-טְרוֹל" },
+            { word: "Cook", translation: "לבשל", phonetic: "קוּק" },
+            { word: "Copy", translation: "להעתיק", phonetic: "קוֹ-פִּי" },
+            { word: "Corner", translation: "פינה", phonetic: "קוֹר-נֶר" },
+            { word: "Correct", translation: "נכון", phonetic: "קוֹ-רֶקְט" },
+            { word: "Cost", translation: "עלות", phonetic: "קוֹסְט" },
+            { word: "Country", translation: "מדינה", phonetic: "קַאן-טְרִי" },
+            { word: "Course", translation: "קורס", phonetic: "קוֹרְס" },
+            { word: "Cover", translation: "לכסות", phonetic: "קַא-ווֶר" },
+            { word: "Create", translation: "ליצור", phonetic: "קְרִי-אֵייט" },
+            { word: "Crime", translation: "פשע", phonetic: "קְרַאיימ" },
+            { word: "Cross", translation: "לחצות", phonetic: "קְרוֹס" },
+            { word: "Cry", translation: "לבכות", phonetic: "קְרַאיי" },
+            { word: "Cut", translation: "לחתוך", phonetic: "קַאת" },
+            { word: "Daily", translation: "יומי", phonetic: "דֵיי-לִי" },
+            { word: "Dance", translation: "לרקוד", phonetic: "דֶנְס" },
+            { word: "Danger", translation: "סכנה", phonetic: "דֵינ-גֶ'ר" },
+            { word: "Dark", translation: "חשוך", phonetic: "דַארְק" },
+            { word: "Date", translation: "תאריך", phonetic: "דֵייט" },
+            { word: "Day", translation: "יום", phonetic: "דֵיי" },
+            { word: "Dead", translation: "מת", phonetic: "דֶד" },
+            { word: "Dear", translation: "יקר", phonetic: "דִיר" },
+            { word: "Death", translation: "מוות", phonetic: "דֶת'" },
+            { word: "Decide", translation: "להחליט", phonetic: "דִי-סַאייד" },
+            { word: "Deep", translation: "עמוק", phonetic: "דִיפּ" },
+            { word: "Degree", translation: "מעלה", phonetic: "דִי-גְרִי" },
+            { word: "Deliver", translation: "למסור", phonetic: "דִי-לִי-ווֶר" },
+            { word: "Depend", translation: "להיות תלוי", phonetic: "דִי-פֶּנְד" },
+            { word: "Describe", translation: "לתאר", phonetic: "דִי-סְקְרַאייב" },
+            { word: "Design", translation: "עיצוב", phonetic: "דִי-זַאיין" },
+            { word: "Detail", translation: "פרט", phonetic: "דִי-טֵייל" },
+            { word: "Develop", translation: "לפתח", phonetic: "דִי-ווֶ-לוֹפּ" },
+            { word: "Die", translation: "למות", phonetic: "דַאיי" },
+            { word: "Different", translation: "שונה", phonetic: "דִי-פֶ-רֶנְט" },
+            { word: "Direct", translation: "ישיר", phonetic: "דִי-רֶקְט" },
+            { word: "Dirty", translation: "מלוכלך", phonetic: "דֶר-טִי" },
+            { word: "Discover", translation: "לגלות", phonetic: "דִי-סְקַא-ווֶר" },
+            { word: "Distance", translation: "מרחק", phonetic: "דִיס-טֶנְס" },
+            { word: "Do", translation: "לעשות", phonetic: "דוּ" },
+            { word: "Doctor", translation: "רופא", phonetic: "דוֹק-טוֹר" },
+            { word: "Dog", translation: "כלב", phonetic: "דוֹג" },
+            { word: "Door", translation: "דלת", phonetic: "דוֹר" },
+            { word: "Double", translation: "כפול", phonetic: "דַא-בֶּל" },
+            { word: "Down", translation: "למטה", phonetic: "דַאוּן" },
+            { word: "Draw", translation: "לצייר", phonetic: "דְרוֹ" },
+            { word: "Dream", translation: "חלום", phonetic: "דְרִים" },
+            { word: "Dress", translation: "שמלה", phonetic: "דְרֶס" },
+            { word: "Drink", translation: "לשתות", phonetic: "דְרִינְק" },
+            { word: "Drive", translation: "לנהוג", phonetic: "דְרַאייב" },
+            { word: "Drop", translation: "להפיל", phonetic: "דְרוֹפּ" },
+            { word: "Dry", translation: "יבש", phonetic: "דְרַאיי" },
+            { word: "During", translation: "במשך", phonetic: "דְיוּ-רִינְג" },
+            { word: "Each", translation: "כל אחד", phonetic: "אִיטְשׁ" },
+            { word: "Early", translation: "מוקדם", phonetic: "אֶר-לִי" },
+            { word: "East", translation: "מזרח", phonetic: "אִיסְט" },
+            { word: "Easy", translation: "קל", phonetic: "אִי-זִי" },
+            { word: "Eat", translation: "לאכול", phonetic: "אִיט" },
+            { word: "Education", translation: "חינוך", phonetic: "אֶ-דְיוּ-קֵיישֶן" },
+            { word: "Effect", translation: "השפעה", phonetic: "אֶ-פֶקְט" },
+            { word: "Egg", translation: "ביצה", phonetic: "אֶג" },
+            { word: "Eight", translation: "שמונה", phonetic: "אֵייט" },
+            { word: "Either", translation: "או / גם", phonetic: "אִי-דֶ'ר" },
+            { word: "Election", translation: "בחירות", phonetic: "אִ-לֶק-שֶׁן" },
+            { word: "Else", translation: "אחר", phonetic: "אֶלְס" },
+            { word: "End", translation: "סוף", phonetic: "אֶנְד" },
+            { word: "Energy", translation: "אנרגיה", phonetic: "אֶ-נֶר-ג'י" },
+            { word: "Enjoy", translation: "ליהנות", phonetic: "אִין-ג'וֹי" },
+            { word: "Enough", translation: "מספיק", phonetic: "אִ-נַאף" },
+            { word: "Enter", translation: "להיכנס", phonetic: "אֶנ-טֶר" },
+            { word: "Environment", translation: "סביבה", phonetic: "אֶנ-ווַיי-רוֹ-מֶנְט" },
+            { word: "Equal", translation: "שווה", phonetic: "אִי-קְווַאל" },
+            { word: "Even", translation: "אפילו", phonetic: "אִי-ווֶן" },
+            { word: "Evening", translation: "ערב", phonetic: "אִיב-נִינְג" },
+            { word: "Event", translation: "אירוע", phonetic: "אִ-ווֶנְט" },
+            { word: "Ever", translation: "אי פעם", phonetic: "אֶ-ווֶר" },
+            { word: "Every", translation: "כל", phonetic: "אֶ-ווְרִי" },
+            { word: "Evidence", translation: "ראיה", phonetic: "אֶ-ווִי-דֶנְס" },
+            { word: "Exact", translation: "מדויק", phonetic: "אִג-זֶקְט" },
+            { word: "Example", translation: "דוגמה", phonetic: "אִג-זֶמ-פֶּל" },
+            { word: "Expect", translation: "לצפות", phonetic: "אִק-סְפֶּקְט" },
+            { word: "Experience", translation: "חוויה / ניסיון", phonetic: "אִק-סְפִּיר-יֶנְס" },
+            { word: "Explain", translation: "להסביר", phonetic: "אִק-סְפְּלֵיין" },
+            { word: "Eye", translation: "עין", phonetic: "איי" },
+            { word: "Face", translation: "פנים", phonetic: "פֵייס" },
+            { word: "Fact", translation: "עובדה", phonetic: "פֶקְט" },
+            { word: "Fail", translation: "להיכשל", phonetic: "פֵייל" },
+            { word: "Fall", translation: "ליפול", phonetic: "פוֹל" },
+            { word: "Family", translation: "משפחה", phonetic: "פֶ-מִי-לִי" },
+            { word: "Far", translation: "רחוק", phonetic: "פַאר" },
+            { word: "Fast", translation: "מהיר", phonetic: "פֶסְט" },
+            { word: "Father", translation: "אבא", phonetic: "פַא-דֶ'ר" },
+            { word: "Fear", translation: "פחד", phonetic: "פִיר" },
+            { word: "Feel", translation: "להרגיש", phonetic: "פִיל" },
+            { word: "Few", translation: "מעט", phonetic: "פְיוּ" },
+            { word: "Field", translation: "שדה", phonetic: "פִילְד" },
+            { word: "Fight", translation: "להילחם", phonetic: "פַאייְט" },
+            { word: "Find", translation: "למצוא", phonetic: "פַאיינְד" },
+            { word: "Fire", translation: "אש", phonetic: "פַאייר" },
+            { word: "First", translation: "ראשון", phonetic: "פֶרְסְט" },
+            { word: "Fish", translation: "דג", phonetic: "פִישׁ" },
+            { word: "Five", translation: "חמש", phonetic: "פַאייב" },
+            { word: "Floor", translation: "רצפה", phonetic: "פְלוֹר" },
+            { word: "Fly", translation: "לעוף", phonetic: "פְלַאיי" },
+            { word: "Focus", translation: "מיקוד", phonetic: "פוֹ-קוּס" },
+            { word: "Follow", translation: "לעקוב", phonetic: "פוֹ-לוֹ" },
+            { word: "Food", translation: "אוכל", phonetic: "פוּד" },
+            { word: "Foot", translation: "רגל", phonetic: "פוּט" },
+            { word: "For", translation: "בשביל", phonetic: "פוֹר" },
+            { word: "Force", translation: "כוח", phonetic: "פוֹרְס" },
+            { word: "Forget", translation: "לשכוח", phonetic: "פוֹר-גֶט" },
+            { word: "Form", translation: "צורה", phonetic: "פוֹרְם" },
+            { word: "Free", translation: "חופשי", phonetic: "פְרִי" },
+            { word: "Friend", translation: "חבר", phonetic: "פְרֶנְד" },
+            { word: "From", translation: "מ-", phonetic: "פְרוֹם" },
+            { word: "Full", translation: "מלא", phonetic: "פוּל" },
+            { word: "Game", translation: "משחק", phonetic: "גֵייְם" },
+            { word: "Garden", translation: "גינה", phonetic: "גַאר-דֶן" },
+            { word: "General", translation: "כללי", phonetic: "גֶ'נ-רָל" },
+            { word: "Get", translation: "לקבל", phonetic: "גֶט" },
+            { word: "Girl", translation: "ילדה", phonetic: "גֶרְל" },
+            { word: "Give", translation: "לתת", phonetic: "גִיוו" },
+            { word: "Glass", translation: "זכוכית", phonetic: "גְלַאס" },
+            { word: "Go", translation: "ללכת", phonetic: "גוֹ" },
+            { word: "Good", translation: "טוב", phonetic: "גוּד" },
+            { word: "Great", translation: "גדול", phonetic: "גְרֵייט" },
+            { word: "Green", translation: "ירוק", phonetic: "גְרִין" },
+            { word: "Ground", translation: "קרקע", phonetic: "גְרַאונְד" },
+            { word: "Group", translation: "קבוצה", phonetic: "גְרוּפּ" },
+            { word: "Grow", translation: "לגדול", phonetic: "גְרוֹ" },
+            { word: "Half", translation: "חצי", phonetic: "הֶף" },
+            { word: "Hand", translation: "יד", phonetic: "הֶנְד" },
+            { word: "Happen", translation: "לקרות", phonetic: "הֶ-פֶּן" },
+            { word: "Happy", translation: "שמח", phonetic: "הֶ-פִּי" },
+            { word: "Hard", translation: "קשה", phonetic: "הַארְד" },
+            { word: "Have", translation: "יש", phonetic: "הֶוו" },
+            { word: "He", translation: "הוא", phonetic: "הִי" },
+            { word: "Head", translation: "ראש", phonetic: "הֶד" },
+            { word: "Health", translation: "בריאות", phonetic: "הֶלְת'" },
+            { word: "Hear", translation: "לשמוע", phonetic: "הִיר" },
+            { word: "Heart", translation: "לב", phonetic: "הַארְט" },
+            { word: "Help", translation: "עזרה", phonetic: "הֶלְפּ" },
+            { word: "High", translation: "גבוה", phonetic: "הַאיי" },
+            { word: "History", translation: "היסטוריה", phonetic: "הִיס-טוֹ-רִי" },
+            { word: "Hold", translation: "להחזיק", phonetic: "הוֹלְד" },
+            { word: "Home", translation: "בית", phonetic: "הוֹם" },
+            { word: "Hope", translation: "תקווה", phonetic: "הוֹפּ" },
+            { word: "Hour", phonetic: "שעה", phonetic: "אֲ-וֶּר" },
+            { word: "House", translation: "בית", phonetic: "הַאוּס" },
+            { word: "How", translation: "איך", phonetic: "הַאוּ" },
+            { word: "Idea", translation: "רעיון", phonetic: "איי-דִיי-אָה" },
+            { word: "If", translation: "אם", phonetic: "אִיף" },
+            { word: "Important", translation: "חשוב", phonetic: "אִים-פּוֹר-טֶנְט" },
+            { word: "In", translation: "בתוך", phonetic: "אִין" },
+            { word: "Include", translation: "לכלול", phonetic: "אִין-קְלוּד" },
+            { word: "Interest", translation: "עניין", phonetic: "אִין-טְרֶסט" },
+            { word: "Is", translation: "הוא", phonetic: "אִיז" },
+            { word: "It", translation: "זה", phonetic: "אִיט" },
+            { word: "Job", translation: "עבודה", phonetic: "ג'וֹבּ" },
+            { word: "Keep", translation: "לשמור", phonetic: "קִיפּ" },
+            { word: "Key", translation: "מפתח", phonetic: "קִי" },
+            { word: "Kid", translation: "ילד", phonetic: "קִיד" },
+            { word: "Kill", translation: "להרוג", phonetic: "קִיל" },
+            { word: "Kind", translation: "סוג / אדיב", phonetic: "קַאיינד" },
+            { word: "Know", translation: "לדעת", phonetic: "נוֹ" },
+            { word: "Land", translation: "אדמה", phonetic: "לֶנְד" },
+            { word: "Language", translation: "שפה", phonetic: "לֶנ-גְוִו-ג'" },
+            { word: "Large", translation: "גדול", phonetic: "לַארְדג'" },
+            { word: "Last", translation: "אחרון", phonetic: "לֶסְט" },
+            { word: "Later", translation: "מאוחר יותר", phonetic: "לֵי-טֶר" },
+            { word: "Learn", translation: "ללמוד", phonetic: "לֶרְן" },
+            { word: "Leave", translation: "לעזוב", phonetic: "לִיב" },
+            { word: "Left", translation: "שמאל / עזב", phonetic: "לֶפְט" },
+            { word: "Let", translation: "לתת", phonetic: "לֶט" },
+            { word: "Letter", translation: "מכתב / אות", phonetic: "לֶ-טֶר" },
+            { word: "Life", translation: "חיים", phonetic: "לַאייף" },
+            { word: "Light", translation: "אור", phonetic: "לַאייְט" },
+            { word: "Like", translation: "כמו / לאהוב", phonetic: "לַאייק" },
+            { word: "Line", translation: "קו", phonetic: "לַאיינ" },
+            { word: "Listen", translation: "להקשיב", phonetic: "לִי-סֶן" },
+            { word: "Little", translation: "קטן", phonetic: "לִי-טֶל" },
+            { word: "Live", translation: "לחיות", phonetic: "לִיב" },
+            { word: "Local", translation: "מקומי", phonetic: "לוֹ-קָל" },
+            { word: "Long", translation: "ארוך", phonetic: "לוֹנְג" },
+            { word: "Look", translation: "להסתכל", phonetic: "לוּק" },
+            { word: "Love", translation: "אהבה", phonetic: "לַאב" },
+            { word: "Main", translation: "עיקרי", phonetic: "מֵיין" },
+            { word: "Make", translation: "לעשות", phonetic: "מֵייק" },
+            { word: "Man", translation: "איש", phonetic: "מֶן" },
+            { word: "Many", translation: "הרבה", phonetic: "מֶ-נִי" },
+            { word: "Market", translation: "שוק", phonetic: "מַאר-קֶט" },
+            { word: "Matter", translation: "עניין", phonetic: "מֶ-טֶר" },
+            { word: "Maybe", translation: "אולי", phonetic: "מֵי-בִּי" },
+            { word: "Me", translation: "אותי", phonetic: "מִי" },
+            { word: "Mean", translation: "להתכוון", phonetic: "מִין" },
+            { word: "Measure", translation: "מידה", phonetic: "מֶ-ז'ר" },
+            { word: "Meet", translation: "לפגוש", phonetic: "מִיט" },
+            { word: "Member", translation: "חבר", phonetic: "מֶמ-בֶּר" },
+            { word: "Memory", translation: "זיכרון", phonetic: "מֶ-מוֹ-רִי" },
+            { word: "Men", translation: "אנשים", phonetic: "מֶן" },
+            { word: "Might", translation: "עלול", phonetic: "מַאייְט" },
+            { word: "Mind", translation: "מחשבה", phonetic: "מַאיינְד" },
+            { word: "Minute", translation: "דקה", phonetic: "מִי-נִיט" },
+            { word: "Miss", translation: "להחמיץ", phonetic: "מִיס" },
+            { word: "Moment", translation: "רגע", phonetic: "מוֹ-מֶנְט" },
+            { word: "Money", translation: "כסף", phonetic: "מַא-נִי" },
+            { word: "Month", translation: "חודש", phonetic: "מַאנְת'" },
+            { word: "More", translation: "יותר", phonetic: "מוֹר" },
+            { word: "Morning", translation: "בוקר", phonetic: "מוֹר-נִינְג" },
+            { word: "Most", translation: "הכי הרבה", phonetic: "מוֹסְט" },
+            { word: "Mother", translation: "אמא", phonetic: "מַא-דֶ'ר" },
+            { word: "Move", translation: "לזוז", phonetic: "מוּב" },
+            { word: "Music", phonetic: "מוזיקה", phonetic: "מְיוּ-זִיק" },
+            { word: "Must", translation: "חייב", phonetic: "מַאסְט" },
+            { word: "Name", translation: "שם", phonetic: "נֵיים" },
+            { word: "Nation", translation: "אומה", phonetic: "נֵי-שֶׁן" },
+            { word: "Near", translation: "קרוב", phonetic: "נִיר" },
+            { word: "Need", translation: "צריך", phonetic: "נִיד" },
+            { word: "Never", translation: "אף פעם", phonetic: "נֶ-ווֶר" },
+            { word: "New", translation: "חדש", phonetic: "נְיוּ" },
+            { word: "Next", translation: "הבא", phonetic: "נֶקְסְט" },
+            { word: "Night", translation: "לילה", phonetic: "נַאייְט" },
+            { word: "No", translation: "לא", phonetic: "נוֹ" },
+            { word: "Not", translation: "לא", phonetic: "נוֹט" },
+            { word: "Nothing", translation: "כלום", phonetic: "נַא-תִ'ינְג" },
+            { word: "Number", translation: "מספר", phonetic: "נַאמ-בֶּר" },
+            { word: "Of", translation: "של", phonetic: "אֹוב" },
+            { word: "Off", translation: "כבוי", phonetic: "אֹוף" },
+            { word: "Often", translation: "לעתים קרובות", phonetic: "אוֹ-פֶן" },
+            { word: "Old", translation: "ישן", phonetic: "אוֹלְד" },
+            { word: "On", translation: "על", phonetic: "אוֹן" },
+            { word: "Once", translation: "פעם אחת", phonetic: "וַואנְס" },
+            { word: "One", translation: "אחד", phonetic: "וַואן" },
+            { word: "Only", translation: "רק", phonetic: "אוֹנ-לִי" },
+            { word: "Open", translation: "פתוח", phonetic: "אוֹ-פֶּן" },
+            { word: "Order", translation: "סדר", phonetic: "אוֹר-דֶר" },
+            { word: "Other", translation: "אחר", phonetic: "אֲ-דֶ'ר" },
+            { word: "Our", translation: "שלנו", phonetic: "אֲ-וֶּר" },
+            { word: "Out", translation: "בחוץ", phonetic: "אאוט" },
+            { word: "Over", translation: "מעל", phonetic: "אוֹ-ווֶר" },
+            { word: "Page", translation: "עמוד", phonetic: "פֵּיידג'" },
+            { word: "Paper", translation: "נייר", phonetic: "פֵּי-פֶּר" },
+            { word: "Part", translation: "חלק", phonetic: "פַּארְט" },
+            { word: "Past", translation: "עבר", phonetic: "פֶּסְט" },
+            { word: "Pay", translation: "לשלם", phonetic: "פֵּיי" },
+            { word: "People", translation: "אנשים", phonetic: "פִּי-פֶּל" },
+            { word: "Person", translation: "אדם", phonetic: "פֶּר-סוֹן" },
+            { word: "Place", translation: "מקום", phonetic: "פְּלֵייס" },
+            { word: "Plan", translation: "תוכנית", phonetic: "פְּלֶן" },
+            { word: "Play", translation: "לשחק", phonetic: "פְּלֵיי" },
+            { word: "Point", translation: "נקודה", phonetic: "פּוֹינְט" },
+            { word: "Power", translation: "כוח", phonetic: "פַּא-וֶר" },
+            { word: "Present", translation: "הווה", phonetic: "פְּרֶ-זֶנְט" },
+            { word: "Problem", translation: "בעיה", phonetic: "פְּרוֹבּ-לֶם" },
+            { word: "Public", translation: "ציבורי", phonetic: "פַּא-בְּלִיק" },
+            { word: "Put", translation: "לשים", phonetic: "פּוּט" },
+            { word: "Question", translation: "שאלה", phonetic: "קְווֶס-טְשֶׁן" },
+            { word: "Quick", translation: "מהיר", phonetic: "קְוִו-יק" },
+            { word: "Read", translation: "לקרוא", phonetic: "רִיד" },
+            { word: "Real", translation: "אמיתי", phonetic: "רִיל" },
+            { word: "Reason", translation: "סיבה", phonetic: "רִי-זֶן" },
+            { word: "Right", translation: "ימין / צודק", phonetic: "רַאייְט" },
+            { word: "Run", translation: "לרוץ", phonetic: "רַאן" },
+            { word: "Same", translation: "אותו דבר", phonetic: "סֵיים" },
+            { word: "Say", translation: "להגיד", phonetic: "סֵיי" },
+            { word: "School", translation: "בית ספר", phonetic: "סְקוּל" },
+            { word: "See", translation: "לראות", phonetic: "סִי" },
+            { word: "Seem", translation: "להיראות", phonetic: "סִים" },
+            { word: "Should", translation: "צריך", phonetic: "שׁוּד" },
+            { word: "Show", translation: "להראות", phonetic: "שׁוֹ" },
+            { word: "Side", translation: "צד", phonetic: "סַאייד" },
+            { word: "Small", translation: "קטן", phonetic: "סְמוֹל" },
+            { word: "So", translation: "כל כך / אז", phonetic: "סוֹ" },
+            { word: "Some", translation: "כמה", phonetic: "סַאם" },
+            { word: "Something", translation: "משהו", phonetic: "סַאמ-תִ'ינְג" },
+            { word: "Start", translation: "להתחיל", phonetic: "סְטַארְט" },
+            { word: "State", translation: "מדינה", phonetic: "סְטֵייט" },
+            { word: "Still", translation: "עדיין", phonetic: "סְטִיל" },
+            { word: "Student", translation: "סטודנט", phonetic: "סְטוּ-דֶנְט" },
+            { word: "Such", translation: "כזה", phonetic: "סַאטְשׁ" },
+            { word: "System", translation: "מערכת", phonetic: "סִיס-טֶם" },
+            { word: "Take", translation: "לקחת", phonetic: "טֵייק" },
+            { word: "Talk", translation: "לדבר", phonetic: "טוֹק" },
+            { word: "Tell", translation: "לספר", phonetic: "טֶל" },
+            { word: "Than", translation: "מאשר", phonetic: "דֶ'ן" },
+            { word: "That", translation: "זה", phonetic: "דֶ'ת" },
+            { word: "The", translation: "ה- הידיעה", phonetic: "דֶ'ה" },
+            { word: "Then", translation: "אז", phonetic: "דֶ'ן" },
+            { word: "There", translation: "שם", phonetic: "דֶ'ר" },
+            { word: "They", translation: "הם", phonetic: "דֶ'יי" },
+            { word: "Thing", translation: "דבר", phonetic: "תִ'ינְג" },
+            { word: "Think", translation: "לחשוב", phonetic: "תִ'ינְק" },
+            { word: "This", translation: "זה", phonetic: "דִ'יס" },
+            { word: "Time", translation: "זמן", phonetic: "טַאיימ" },
+            { word: "To", translation: "אל", phonetic: "טוּ" },
+            { word: "Too", translation: "גם / מדי", phonetic: "טוּ" },
+            { word: "Turn", translation: "להסתובב / תור", phonetic: "טֶרְן" },
+            { word: "Under", translation: "מתחת", phonetic: "אֲנ-דֶר" },
+            { word: "Up", translation: "למעלה", phonetic: "אֲפּ" },
+            { word: "Use", translation: "להשתמש", phonetic: "יוּז" },
+            { word: "Very", translation: "מאוד", phonetic: "ווֶ-רִי" },
+            { word: "Voice", translation: "קול", phonetic: "ווֹיְס" },
+            { word: "Wait", translation: "לחכות", phonetic: "וֵוייט" },
+            { word: "Walk", translation: "ללכת", phonetic: "ווֹק" },
+            { word: "Want", translation: "רוצה", phonetic: "ווֹנְט" },
+            { word: "War", translation: "מלחמה", phonetic: "ווֹר" },
+            { word: "Water", translation: "מים", phonetic: "ווֹ-טֶר" },
+            { word: "Way", translation: "דרך", phonetic: "וֵווי" },
+            { word: "We", translation: "אנחנו", phonetic: "ווִי" },
+            { word: "Week", translation: "שבוע", phonetic: "ווִיק" },
+            { word: "What", translation: "מה", phonetic: "וַואט" },
+            { word: "When", translation: "מתי", phonetic: "וֶו-ן" },
+            { word: "Where", translation: "איפה", phonetic: "וֶו-ר" },
+            { word: "Which", translation: "איזה", phonetic: "ווִיטְשׁ" },
+            { word: "Who", translation: "מי", phonetic: "הוּ" },
+            { word: "Will", translation: "יקרה בעתיד", phonetic: "ווִיל" },
+            { word: "With", translation: "עם", phonetic: "ווִית'" },
+            { word: "Woman", translation: "אישה", phonetic: "ווּ-מֶן" },
+            { word: "Word", translation: "מילה", phonetic: "ווֹרְד" },
+            { word: "Work", translation: "עבודה", phonetic: "ווֹרְק" },
+            { word: "World", translation: "עולם", phonetic: "ווֹרְלְד" },
+            { word: "Write", translation: "לכתוב", phonetic: "רַאייט" },
+            { word: "Year", translation: "שנה", phonetic: "יִיר" },
+            { word: "Yes", translation: "כן", phonetic: "יֶס" },
+            { word: "You", translation: "אתה", phonetic: "יוּ" },
+            { word: "Young", translation: "צעיר", phonetic: "יַאנְג" }
+        ];
+
+        function App() {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [showTranslation, setShowTranslation] = useState(false);
+            const [learnedWords, setLearnedWords] = useState([]);
+            const [sessionWords, setSessionWords] = useState([]);
+            const [isFinished, setIsFinished] = useState(false);
+            const [searchTerm, setSearchTerm] = useState("");
+
+            useEffect(() => {
+                const saved = JSON.parse(localStorage.getItem('english_pro_final_v1') || '[]');
+                setLearnedWords(saved);
+                const remaining = FINAL_WORD_LIST.filter(w => !saved.includes(w.word));
+                setSessionWords(remaining);
+                if (remaining.length === 0) setIsFinished(true);
+                lucide.createIcons();
+            }, []);
+
+            useEffect(() => { lucide.createIcons(); }, [showTranslation, isFinished, sessionWords]);
+
+            const filteredWords = useMemo(() => {
+                return sessionWords.filter(w => w.word.toLowerCase().includes(searchTerm.toLowerCase()));
+            }, [sessionWords, searchTerm]);
+
+            const currentWordData = filteredWords[currentIndex];
+
+            const handleNext = () => {
+                setShowTranslation(false);
+                if (currentIndex < filteredWords.length - 1) {
+                    setCurrentIndex(currentIndex + 1);
+                } else {
+                    setCurrentIndex(0);
+                }
+            };
+
+            const handleMarkAsLearned = () => {
+                if (!currentWordData) return;
+                const newLearned = [...learnedWords, currentWordData.word];
+                setLearnedWords(newLearned);
+                localStorage.setItem('english_pro_final_v1', JSON.stringify(newLearned));
+                const updated = sessionWords.filter(w => w.word !== currentWordData.word);
+                setSessionWords(updated);
+                setShowTranslation(false);
+                if (updated.length === 0) setIsFinished(true);
+                else if (currentIndex >= updated.length) setCurrentIndex(0);
+            };
+
+            if (isFinished) return (
+                <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+                    <div className="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-md w-full border border-slate-100">
+                        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i data-lucide="check" style={{width: 48, height: 48}}></i>
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-800 mb-4">אלופים!</h1>
+                        <p className="text-slate-500 mb-8 font-medium">סיימתם ללמוד את כל 500 המילים!</p>
+                        <button onClick={() => { localStorage.removeItem('english_pro_final_v1'); window.location.reload(); }} className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-bold shadow-lg">התחל מחדש</button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen py-8 px-4 flex flex-col items-center">
+                    {/* Header */}
+                    <div className="max-w-xl w-full flex justify-between items-center mb-6">
+                        <div className="flex items-center gap-2 text-indigo-600">
+                            <i data-lucide="book-open" style={{width: 28, height: 28}}></i>
+                            <span className="font-black text-xl tracking-tight">Vocab Master 500</span>
+                        </div>
+                        <div className="bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold border border-slate-50">
+                            {learnedWords.length} / {FINAL_WORD_LIST.length}
+                        </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="max-w-xl w-full h-2.5 bg-slate-200 rounded-full mb-8 overflow-hidden">
+                        <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(learnedWords.length / FINAL_WORD_LIST.length) * 100}%` }}></div>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="max-w-xl w-full relative mb-8">
+                        <input 
+                            type="text" 
+                            placeholder="חפש מילה ברשימה..." 
+                            className="w-full py-5 px-6 bg-white rounded-[2rem] shadow-sm border-none outline-none text-lg focus:ring-2 focus:ring-indigo-100 transition-all text-center"
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentIndex(0); }}
+                        />
+                    </div>
+
+                    {/* Flashcard */}
+                    <div className="max-w-xl w-full">
+                        {!currentWordData ? (
+                            <div className="bg-white p-16 rounded-[3rem] text-center shadow-lg text-slate-400 font-bold">לא נמצאו מילים תואמות</div>
+                        ) : (
+                            <div 
+                                className={`bg-white rounded-[3rem] shadow-2xl p-8 min-h-[450px] flex flex-col items-center justify-center cursor-pointer transition-all duration-500 relative ${showTranslation ? 'ring-4 ring-indigo-50' : ''}`}
+                                onClick={() => setShowTranslation(!showTranslation)}
+                            >
+                                <span className="absolute top-8 right-8 text-[10px] font-black text-slate-300 tracking-[0.2em] uppercase">LEVEL: ESSENTIAL</span>
+                                
+                                <h2 className={`font-black text-slate-800 transition-all duration-500 text-center ${showTranslation ? 'text-5xl mb-8' : 'text-8xl'}`}>
+                                    {currentWordData.word}
+                                </h2>
+
+                                {showTranslation && (
+                                    <div className="text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        <div className="h-1 w-12 bg-indigo-100 rounded-full mx-auto mb-6"></div>
+                                        <p className="text-5xl font-black text-indigo-600 mb-4">{currentWordData.translation}</p>
+                                        <div className="inline-flex items-center gap-2 bg-slate-50 px-5 py-2.5 rounded-2xl border border-slate-100">
+                                            <i data-lucide="info" style={{width: 18, height: 18}} className="text-indigo-300"></i>
+                                            <span className="text-xl font-bold text-slate-500 tracking-wide">{currentWordData.phonetic}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!showTranslation && (
+                                    <div className="mt-16 flex flex-col items-center gap-3 text-indigo-400 animate-pulse-custom">
+                                        <i data-lucide="eye" style={{width: 42, height: 42}} strokeWidth={2.5}></i>
+                                        <span className="text-xs font-black tracking-widest uppercase">לחץ לתרגום</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Controls */}
+                    <div className="max-w-xl w-full mt-8 grid grid-cols-2 gap-4">
+                        <button onClick={handleMarkAsLearned} disabled={!currentWordData} className="py-6 bg-white text-emerald-600 rounded-[2.5rem] border-2 border-emerald-50 font-black text-xl shadow-lg active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" style={{width: 24, height: 24}}></i>
+                            יודע
+                        </button>
+                        <button onClick={handleNext} disabled={!currentWordData} className="py-6 bg-indigo-600 text-white rounded-[2.5rem] font-black text-xl shadow-xl active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2">
+                            מילה הבאה
+                            <i data-lucide="chevron-right" style={{width: 24, height: 24}}></i>
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
